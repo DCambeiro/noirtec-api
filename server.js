@@ -84,10 +84,80 @@ app.delete("/jobs/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
-const port = process.env.PORT;
+// -------- PLATES --------
+
+// Obtener placas
+app.get("/plates", async (_, res) => {
+  const r = await pool.query("SELECT * FROM plates ORDER BY plate_id DESC");
+  res.json(r.rows);
+});
+
+// Crear placa o retal
+app.post("/plates", async (req, res) => {
+  const { plateId, material, ancho, alto, espesor, tipo } = req.body;
+
+  const r = await pool.query(
+    `INSERT INTO plates (plate_id, material, ancho, alto, espesor, tipo)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     RETURNING *`,
+    [Number(plateId), material, Number(ancho), Number(alto), Number(espesor), tipo]
+  );
+
+  res.json(r.rows[0]);
+});
+
+// Borrar placa
+app.delete("/plates/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  await pool.query("DELETE FROM plates WHERE id = $1", [id]);
+  res.json({ ok: true });
+});
+
+
+// -------- TASKS --------
+
+// Obtener checklist
+app.get("/tasks", async (_, res) => {
+  const r = await pool.query("SELECT * FROM tasks ORDER BY id DESC");
+  res.json(r.rows);
+});
+
+// Crear tarea
+app.post("/tasks", async (req, res) => {
+  const { description } = req.body;
+
+  const r = await pool.query(
+    "INSERT INTO tasks (description, completed) VALUES ($1, false) RETURNING *",
+    [description]
+  );
+
+  res.json(r.rows[0]);
+});
+
+// Cambiar estado tarea
+app.patch("/tasks/:id/toggle", async (req, res) => {
+  const id = Number(req.params.id);
+
+  const r = await pool.query(
+    "UPDATE tasks SET completed = NOT completed WHERE id = $1 RETURNING *",
+    [id]
+  );
+
+  res.json(r.rows[0]);
+});
+
+// Borrar tarea
+app.delete("/tasks/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  await pool.query("DELETE FROM tasks WHERE id = $1", [id]);
+  res.json({ ok: true });
+});
+
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log("API running on", port);
 });
+
 
 
 
