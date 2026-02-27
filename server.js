@@ -9,6 +9,44 @@ app.use(express.json());
 const { Pool } = pg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS jobs (
+      id SERIAL PRIMARY KEY,
+      archivo TEXT NOT NULL,
+      cantidad INT NOT NULL,
+      material TEXT NOT NULL,
+      notas TEXT DEFAULT '',
+      completed BOOLEAN DEFAULT FALSE,
+      fecha DATE DEFAULT CURRENT_DATE
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS plates (
+      id SERIAL PRIMARY KEY,
+      plate_id INT NOT NULL,
+      material TEXT NOT NULL,
+      ancho INT NOT NULL,
+      alto INT NOT NULL,
+      espesor INT NOT NULL,
+      tipo TEXT NOT NULL CHECK (tipo IN ('placa','retal'))
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id SERIAL PRIMARY KEY,
+      description TEXT NOT NULL,
+      completed BOOLEAN NOT NULL DEFAULT FALSE
+    );
+  `);
+
+  console.log("DB ready ✅");
+}
+
+initDb().catch(err => console.error("DB init error:", err));
+
 app.get("/health", (_, res) => res.json({ ok: true }));
 
 // Obtener todos los trabajos
@@ -47,4 +85,5 @@ app.delete("/jobs/:id", async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
+
 app.listen(port, () => console.log("API running on", port));
