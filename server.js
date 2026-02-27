@@ -84,6 +84,10 @@ app.delete("/jobs/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
+app.listen(port, () => {
+  console.log("API running on", port);
+});
 
 app.listen(port, () => console.log("API running on", port));
+
